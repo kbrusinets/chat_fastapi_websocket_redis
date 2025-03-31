@@ -1,0 +1,2 @@
+class DbServiceException(Exception):
+    pass

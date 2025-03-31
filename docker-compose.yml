@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7.4-alpine
+    container_name: redis
+    restart: always
+    ports:
+      - "6379:6379"
+    environment:
+      REDIS_PASSWORD: secret
+    command: ["redis-server", "--requirepass", "secret"]
+
+  redisinsight:
+    image: redis/redisinsight:2.66
+    container_name: redisinsight
+    restart: always
+    ports:
+      - "5540:5540"
+    depends_on:
+      - redis
+
+  nginx:
+    image: nginx:1.27.4-alpine
+    container_name: nginx
+    restart: always
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - backend1
+      - backend2
+
+  backend1:
+    build: .
+    image: myapp:latest
+    container_name: backend1
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: always
+    ports:
+      - "8000:8000"
+
+  backend2:
+    image: myapp:latest
+    container_name: backend2
+    depends_on:
+      postgres:
+        condition: service_healthy
+      backend1:
+        condition: service_started
+    restart: always
+    ports:
+      - "8001:8000"
+
+  alembic:
+    image: myapp:latest
+    container_name: alembic-migration
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      backend1:
+        condition: service_started
+
+  postgres:
+    image: postgres:17.4-alpine
+    container_name: chatapp-postgres
+    ports:
+      - 6432:5432
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=pass
+      - POSTGRES_USER=user
+      - POSTGRES_DB=chat_app
+    healthcheck:
+      test: ["CMD-SHELL", "PGPASSWORD=pass psql -U user -d chat_app -c 'SELECT 1'"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
