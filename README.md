@@ -36,9 +36,9 @@ A scalable WebSocket chat application using FastAPI, Redis, and Nginx for load b
 4. Access the application - http://127.0.0.1:8080
 
 ## 👥Available users 
-- "first@example.com" 
-- "second@example.com"
-- "third@example.com". 
+- first@example.com 
+- second@example.com
+- third@example.com 
 - <strong>Password</strong>: `password` (same for all users)
 
 ## 📊 Redis Monitoring (Optional)
